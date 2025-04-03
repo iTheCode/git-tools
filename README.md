@@ -70,26 +70,25 @@ gbranches <feature-name> [options]
 | `-b, --pr-body` | Pull request body/description (use with -pr) |
 | `-h, --help` | Show help message |
 
-### Examples
+### Use
 
 1. **Create branches only**:
    ```bash
-   gbranches CDC-123-card-feature-name
+   gbranches CDC-123-card-feature-name -c
    ```
-
-2. **Create branches and push to remote**:
+2. **Add elements**:
    ```bash
-   gbranches CDC-123-card-feature-name -p
+   git add .
    ```
 
-3. **Create branches, apply changes, and push to remote**:
+3. **Commit, propagate and push to branches**:
    ```bash
    gbranches CDC-123-card-feature-name -p -a -m "Add user authentication feature"
    ```
 
-4. **Create branches, push to remote, and create PRs**:
+4. **Pushd and Create PRs**:
    ```bash
-   gbranches CDC-123-card-feature-name -p -pr "Implements user authentication feature"
+   gbranches CDC-123-login-feature -p -pr -b "Implement login functionality" --pr-body "This PR adds login functionality with OAuth support"
    ```
 
 ## PR Creation
@@ -101,36 +100,6 @@ To use the PR creation feature, you must:
 
 The script will create PRs with titles formatted as: `[PREFIX] feature-name`
 
-## Workflow Example
-
-Here's a typical workflow:
-
-1. **Start a new feature**:
-   ```bash
-   gbranches CDC-123-login-feature -c
-   ```
-
-2. **Make your changes on the PROD branch first or stay in master**:
-   ```bash
-   git checkout PROD_CDC-123-login-feature
-   # Make code changes...
-   ```
-   or
-   ```bash
-   git checkout master
-   # Make code changes...
-   ```
-3. **Apply changes and propagate**:
-   ```bash
-   gbranches CDC-123-login-feature -p -a -m "Implement login functionality"
-   ```
-
-4. **Apply changes and create PRs with body description**:
-   ```bash
-   gbranches CDC-123-login-feature -p -pr -b "Implement login functionality" --pr-body "This PR adds login functionality with OAuth support"
-   ```
-
-5. **Check all created PRs on GitHub and proceed with the review process**
 
 ## Troubleshooting
 
