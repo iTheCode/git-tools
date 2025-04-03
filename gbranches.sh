@@ -214,19 +214,22 @@ function propagate_changes() {
     fi
 
     # Start with the most stable branch (usually PROD/master)
-    local first_branch=${sorted_branches[0]}
+    local first_branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "detached")
     if [[ -n "$first_branch" ]]; then
         echo "Starting with branch: $first_branch"
         git checkout "$first_branch"
 
-        # Commit changes on the first branch
-        git add .
-        git commit -m "$commit_message"
+        # Check if there are changes to commit
+        if has_uncommitted_changes; then
+            echo "Committing changes on $first_branch..."
+            git commit -m "$commit_message"
+        fi
+
         local commit_hash=$(git rev-parse HEAD)
         echo "✅ Committed changes to $first_branch (Commit: ${commit_hash:0:8})"
 
         # Now propagate to other branches using cherry-pick
-        for ((i=1; i<${#sorted_branches[@]}; i++)); do
+        for ((i=0; i<${#sorted_branches[@]}; i++)); do
             local current_branch=${sorted_branches[$i]}
 
             echo "Cherry-picking to: $current_branch (from commit: ${commit_hash:0:8})"

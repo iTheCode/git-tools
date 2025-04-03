@@ -107,18 +107,27 @@ Here's a typical workflow:
 
 1. **Start a new feature**:
    ```bash
-   gbranches CDC-123-login-feature
+   gbranches CDC-123-login-feature -c
    ```
 
-2. **Make your changes on the PROD branch first**:
+2. **Make your changes on the PROD branch first or stay in master**:
    ```bash
    git checkout PROD_CDC-123-login-feature
    # Make code changes...
    ```
-
-3. **Apply changes and create PRs**:
+   or
    ```bash
-   gbranches CDC-123-login-feature -a -m "Implement login functionality" -p -pr -b "This PR adds login functionality with OAuth support"
+   git checkout master
+   # Make code changes...
+   ```
+3. **Apply changes and propagate**:
+   ```bash
+   gbranches CDC-123-login-feature -p -a -m "Implement login functionality"
+   ```
+
+4. **Apply changes and create PRs**:
+   ```bash
+   gbranches CDC-123-login-feature -p -pr -b "Implement login functionality" --pr-body "This PR adds login functionality with OAuth support"
    ```
 
 4. **Check all created PRs on GitHub and proceed with the review process**
