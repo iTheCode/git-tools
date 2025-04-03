@@ -89,7 +89,7 @@ gbranches <feature-name> [options]
 
 4. **Create branches, push to remote, and create PRs**:
    ```bash
-   gbranches CDC-123-card-feature-name -p -pr -b "Implements user authentication feature"
+   gbranches CDC-123-card-feature-name -p -pr "Implements user authentication feature"
    ```
 
 ## PR Creation
@@ -125,12 +125,12 @@ Here's a typical workflow:
    gbranches CDC-123-login-feature -p -a -m "Implement login functionality"
    ```
 
-4. **Apply changes and create PRs**:
+4. **Apply changes and create PRs with body description**:
    ```bash
    gbranches CDC-123-login-feature -p -pr -b "Implement login functionality" --pr-body "This PR adds login functionality with OAuth support"
    ```
 
-4. **Check all created PRs on GitHub and proceed with the review process**
+5. **Check all created PRs on GitHub and proceed with the review process**
 
 ## Troubleshooting
 
