@@ -120,7 +120,7 @@ function create_feature_branches() {
     declare -a created_branches=()
 
     # Store the current branch to return to it later
-    local master_branch="master"
+    local master_branch="PROD_${feature_name}"
     local current_branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "detached")
 
     echo "Creating feature branches for: $feature_name"
@@ -159,17 +159,14 @@ function create_feature_branches() {
         echo ""
     done
 
-    # Return to the original branch if not applying changes
-    if [[ "$APPLY_CHANGES" != "true" && "$current_branch" != "detached" ]]; then
-        echo "Returning to original branch: $master_branch"
-        git checkout "$master_branch"
-    fi
-
     echo "----------------------------------------"
     echo "Summary of created branches:"
     for branch in "${created_branches[@]}"; do
         echo "✅ $branch"
     done
+
+
+    git checkout "$master_branch"
 
     # Save created branches to a global variable
     CREATED_BRANCHES=("${created_branches[@]}")
@@ -214,7 +211,7 @@ function propagate_changes() {
     fi
 
     # Start with the most stable branch (usually PROD/master)
-    local first_branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "detached")
+    local first_branch="PROD_${FEATURE_NAME}"
     if [[ -n "$first_branch" ]]; then
         echo "Starting with branch: $first_branch"
         git checkout "$first_branch"
@@ -229,7 +226,7 @@ function propagate_changes() {
         echo "✅ Committed changes to $first_branch (Commit: ${commit_hash:0:8})"
 
         # Now propagate to other branches using cherry-pick
-        for ((i=0; i<${#sorted_branches[@]}; i++)); do
+        for ((i=1; i<${#sorted_branches[@]}; i++)); do
             local current_branch=${sorted_branches[$i]}
 
             echo "Cherry-picking to: $current_branch (from commit: ${commit_hash:0:8})"
@@ -335,6 +332,8 @@ function create_pull_requests() {
 
     echo "----------------------------------------"
     echo "PR creation completed"
+
+    git checkout master
 }
 
 # Parse command line arguments
@@ -443,12 +442,6 @@ fi
 # Create PRs if requested
 if [[ "$CREATE_PR" == "true" && ${#CREATED_BRANCHES[@]} -gt 0 ]]; then
     create_pull_requests "${CREATED_BRANCHES[@]}"
-fi
-
-# Return to original branch
-if [[ "$CURRENT_BRANCH" != "detached" ]]; then
-    echo "Returning to original branch: $CURRENT_BRANCH"
-    git checkout "$CURRENT_BRANCH"
 fi
 
 echo ""
