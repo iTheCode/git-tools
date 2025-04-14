@@ -100,7 +100,7 @@ gbranches <feature-name> [options]
 
 4. **Pushd and Create PRs**:
    ```bash
-   gbranches CDC-123-login-feature -pr"Implement login functionality" -b "This PR adds login functionality with OAuth support"
+   gbranches CDC-123-login-feature -pr "Implement login functionality" -b "This PR adds login functionality with OAuth support"
    ```
 
 ## PR Creation
