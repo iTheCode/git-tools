@@ -14,26 +14,33 @@
 ## Installation
 
 1. Download the script:
+
    ```bash
    curl -o gbranches https://raw.githubusercontent.com/iTheCode/git-tools/main/gbranches.sh
    ```
 
 2. Make it executable:
+
    ```bash
    chmod +x gbranches
    ```
 
 3. Move it to a directory in your PATH:
+
    ```bash
    sudo mv gbranches /usr/local/bin/
    ```
 
 4. Install gh:
+
    - Mac:
+
    ```bash
    brew install gh
    ```
+
    - Linux:
+
    ```bash
    sudo apt install gh
    ```
@@ -46,6 +53,7 @@
 ## Branch Hierarchy
 
 The script works with the following branch hierarchy (bottom-up):
+
 ```
 master (PROD) → staging (STG) → testing (QA) → develop (DEV)
 ```
@@ -60,35 +68,39 @@ gbranches <feature-name> [options]
 
 ### Options
 
-| Option | Description |
-|--------|-------------|
-| `-c, --create-only` | Only create branches without propagating changes |
-| `-p, --push` | Push branches to remote after creation/propagation |
-| `-m, --message` | Commit message for changes (required with -a) |
-| `-a, --apply-changes` | Apply changes to all branches (requires -m) |
-| `-pr, --create-pr` | Create pull requests for each branch |
-| `-b, --pr-body` | Pull request body/description (use with -pr) |
-| `-h, --help` | Show help message |
+| Option                | Description                                        |
+| --------------------- | -------------------------------------------------- |
+| `-c, --create-only`   | Only create branches without propagating changes   |
+| `-p, --push`          | Push branches to remote after creation/propagation |
+| `-m, --message`       | Commit message for changes (required with -a)      |
+| `-a, --apply-changes` | Apply changes to all branches (requires -m)        |
+| `-pr, --create-pr`    | Create pull requests for each branch               |
+| `-b, --pr-body`       | Pull request body/description (use with -pr)       |
+| `-h, --help`          | Show help message                                  |
 
 ### Use
+
+## Start from master branch
 
 1. **Create branches only**:
    ```bash
    gbranches CDC-123-card-feature-name -c
    ```
 2. **Add elements**:
+
    ```bash
    git add .
    ```
 
 3. **Commit, propagate and push to branches**:
+
    ```bash
    gbranches CDC-123-card-feature-name -p -a -m "Add user authentication feature"
    ```
 
 4. **Pushd and Create PRs**:
    ```bash
-   gbranches CDC-123-login-feature -p -pr -b "Implement login functionality" --pr-body "This PR adds login functionality with OAuth support"
+   gbranches CDC-123-login-feature -pr"Implement login functionality" -b "This PR adds login functionality with OAuth support"
    ```
 
 ## PR Creation
@@ -99,7 +111,6 @@ To use the PR creation feature, you must:
 2. Be authenticated with GitHub using `gh auth login`
 
 The script will create PRs with titles formatted as: `[PREFIX] feature-name`
-
 
 ## Troubleshooting
 

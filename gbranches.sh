@@ -16,8 +16,8 @@ function show_usage() {
     echo "  -p, --push           Push branches to remote after creation/propagation"
     echo "  -m, --message        Commit message for changes (required with -a)"
     echo "  -a, --apply-changes  Apply changes to all branches (requires -m)"
-    echo "  -pr, --create-pr     Create pull requests for each branch"
-    echo "  -b, --pr-body        Pull request body/description (use with -r)"
+    echo "  -pr, --create-pr     Create pull requests for each branch with the given title"
+    echo "  -b, --pr-body        Pull request body/description (use with -pr)"
     echo "  -h, --help           Show this help message"
     echo ""
     echo "Base branches hierarchy (bottom-up):"
@@ -31,10 +31,10 @@ function show_usage() {
     echo "  Creates branches, applies changes, and pushes to remote"
     echo ""
     echo "  gbranches CDC-123-card-feature-name -p -pr \"Implements user authentication feature\""
-    echo "  Creates branches, pushes to remote, and creates PRs"
+    echo "  Creates branches, pushes to remote, and creates PRs with the provided title"
     echo ""
     echo "  gbranches CDC-123-card-feature-name -p -pr \"Implements user authentication feature\" -b \"Implements user authentication feature\""
-    echo "  Creates branches, pushes to remote, and creates PRs with custom PR body"
+    echo "  Creates branches, pushes to remote, and creates PRs with custom PR title and body"
     echo ""
     echo "Important: "
     echo "  PR create option needs to be authenticated with GitHub using 'gh auth login'"
@@ -233,17 +233,25 @@ function propagate_changes() {
             git checkout "$current_branch"
 
             # Try to cherry-pick the commit
-            if git cherry-pick "$commit_hash"; then
+            if [[ "$first_branch" != "$current_branch" ]] && git cherry-pick "$commit_hash" --strategy-option theirs; then
+                echo "✅ Successfully cherry-picked changes to $current_branch"
+
+            elif [[ "$first_branch" == "$current_branch" ]] && git cherry-pick "$commit_hash" --strategy-option ours; then
                 echo "✅ Successfully cherry-picked changes to $current_branch"
             else
-                echo "⚠️  Cherry-pick conflicts in $current_branch"
-                echo "To resolve manually:"
-                echo "  1. Fix the conflicts in the files"
-                echo "  2. git add <resolved-files>"
-                echo "  3. git cherry-pick --continue"
-                echo "  4. Or to abort: git cherry-pick --abort"
-                echo "Manual intervention required - stopping propagation"
-                return 1
+                # If the commit is already or empty in the branch, skip the cherry-pick
+                if git commit --allow-empty; then
+                    echo "✅ Successfully skipped cherry-pick to $current_branch"
+                else
+                    echo "⚠️  Cherry-pick conflicts in $current_branch"
+                    echo "To resolve manually:"
+                    echo "  1. Fix the conflicts in the files"
+                    echo "  2. git add <resolved-files>"
+                    echo "  3. git cherry-pick --continue"
+                    echo "  4. Or to abort: git cherry-pick --abort"
+                    echo "Manual intervention required - stopping propagation"
+                    return 1
+                fi
             fi
         done
     fi
@@ -281,6 +289,7 @@ function push_branches() {
 function create_pull_requests() {
     local branches=($@)
     local feature_name="$FEATURE_NAME"
+    local pr_title="$PR_TITLE"
     local pr_body="$PR_BODY"
 
     # Exit if no branches to process
@@ -302,6 +311,8 @@ function create_pull_requests() {
     for branch in "${branches[@]}"; do
         # Extract the prefix (DEV, QA, STG, PROD)
         local prefix=$(echo "$branch" | cut -d'_' -f1)
+        local card_number=$(echo "$feature_name" | cut -d'-' -f1,2)
+
         if [[ $prefix == "DEV" ]]; then
             local target_branch="develop"
         elif [[ $prefix == "QA" ]]; then
@@ -312,14 +323,14 @@ function create_pull_requests() {
             local target_branch="master"
         fi
 
-        # Construct PR title based on prefix
-        local pr_title="[$prefix] $feature_name"
+        # Construct PR title based on prefix and provided title
+        local full_pr_title="[$prefix] $card_number: $pr_title"
 
         echo "Creating PR for $branch → $target_branch"
         git checkout "$branch"
 
         # Create the PR using GitHub CLI
-        if gh pr create --base "$target_branch" --head "$branch" --title "$pr_title" --body "$pr_body"; then
+        if gh pr create --base "$target_branch" --head "$branch" --title "$full_pr_title" --body "$pr_body"; then
             echo "✅ Successfully created PR for $branch"
 
             # Get the PR URL and display it
@@ -342,8 +353,9 @@ CREATE_ONLY=false
 PUSH_BRANCHES=false
 APPLY_CHANGES=false
 CREATE_PR=false
-COMMIT_MESSAGE=""
+PR_TITLE=""
 PR_BODY=""
+COMMIT_MESSAGE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -366,15 +378,34 @@ while [[ $# -gt 0 ]]; do
         -pr|--create-pr)
             CREATE_PR=true
             PUSH_BRANCHES=true  # PR creation requires pushing
-            shift
+            if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+                PR_TITLE="$2"
+                shift 2
+            else
+                echo "Error: -pr/--create-pr requires a PR title"
+                show_usage
+                exit 1
+            fi
             ;;
         -m|--message)
-            COMMIT_MESSAGE="$2"
-            shift 2
+            if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+                COMMIT_MESSAGE="$2"
+                shift 2
+            else
+                echo "Error: -m/--message requires a commit message"
+                show_usage
+                exit 1
+            fi
             ;;
         -b|--pr-body)
-            PR_BODY="$2"
-            shift 2
+            if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+                PR_BODY="$2"
+                shift 2
+            else
+                echo "Error: -b/--pr-body requires a PR body"
+                show_usage
+                exit 1
+            fi
             ;;
         *)
             if [[ -z "$FEATURE_NAME" ]]; then
@@ -398,6 +429,12 @@ fi
 
 if [[ "$APPLY_CHANGES" == "true" && -z "$COMMIT_MESSAGE" ]]; then
     echo "Error: Commit message (-m) is required with apply changes (-a)"
+    show_usage
+    exit 1
+fi
+
+if [[ "$CREATE_PR" == "true" && -z "$PR_TITLE" ]]; then
+    echo "Error: PR title is required with create PR (-pr)"
     show_usage
     exit 1
 fi
