@@ -258,6 +258,7 @@ function propagate_changes() {
 
     echo "----------------------------------------"
     echo "Successfully propagated changes to all branches using cherry-pick"
+    git checkout "$first_branch"
 }
 
 # Function to push branches to remote
@@ -463,22 +464,30 @@ fi
 # Remember current branch
 CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "detached")
 
-# Create the feature branches (stores result in CREATED_BRANCHES variable)
-create_feature_branches "$FEATURE_NAME"
 
-# Propagate changes if requested
-if [[ "$APPLY_CHANGES" == "true" && ${#CREATED_BRANCHES[@]} -gt 0 ]]; then
-    propagate_changes "${CREATED_BRANCHES[@]}"
+BRANCHES=()
+for prefix in "DEV" "QA" "STG" "PROD"; do
+    BRANCHES+=("${prefix}_${FEATURE_NAME}")
+done
+
+# Create the feature branches (stores result in CREATED_BRANCHES variable)
+if [[ "$CREATE_ONLY" == "true" ]]; then 
+    create_feature_branches "$FEATURE_NAME"
+fi
+
+# Apply changes if requested
+if [[ "$APPLY_CHANGES" == "true"  ]]; then
+    propagate_changes "${BRANCHES[@]}"
 fi
 
 # Push branches if requested
-if [[ "$PUSH_BRANCHES" == "true" && ${#CREATED_BRANCHES[@]} -gt 0 ]]; then
-    push_branches "${CREATED_BRANCHES[@]}"
+if [[ "$PUSH_BRANCHES" == "true" ]]; then
+    push_branches "${BRANCHES[@]}"
 fi
 
 # Create PRs if requested
-if [[ "$CREATE_PR" == "true" && ${#CREATED_BRANCHES[@]} -gt 0 ]]; then
-    create_pull_requests "${CREATED_BRANCHES[@]}"
+if [[ "$CREATE_PR" == "true" && ${#BRANCHES[@]} -gt 0 ]]; then
+    create_pull_requests "${BRANCHES[@]}"
 fi
 
 echo ""
