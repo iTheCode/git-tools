@@ -199,6 +199,8 @@ function propagate_changes() {
         done
     done
 
+    local remote_branches=("master" "staging" "testing" "develop")
+
     # If no changes to apply (create only mode), return
     if [[ "$APPLY_CHANGES" != "true" ]]; then
         return
@@ -228,15 +230,19 @@ function propagate_changes() {
         # Now propagate to other branches using cherry-pick
         for ((i=1; i<${#sorted_branches[@]}; i++)); do
             local current_branch=${sorted_branches[$i]}
+            local remote_branch=${remote_branches[$i]}
 
             echo "Cherry-picking to: $current_branch (from commit: ${commit_hash:0:8})"
             git checkout "$current_branch"
+            git fetch
+            if git pull origin "$remote_branch" then
+                echo "✅ Successfully pulled changes from $remote_branch"
+            else
+                echo "⚠️  Conflicts with $remote_branch as recomendation create a new branch and start as a new feature"
+            fi
 
             # Try to cherry-pick the commit
-            if [[ "$first_branch" != "$current_branch" ]] && git cherry-pick "$commit_hash" --strategy-option theirs; then
-                echo "✅ Successfully cherry-picked changes to $current_branch"
-
-            elif [[ "$first_branch" == "$current_branch" ]] && git cherry-pick "$commit_hash" --strategy-option ours; then
+            if [[ "$first_branch" != "$current_branch" ]] && git cherry-pick "$commit_hash"; then
                 echo "✅ Successfully cherry-picked changes to $current_branch"
             else
                 # If the commit is already or empty in the branch, skip the cherry-pick
@@ -316,12 +322,16 @@ function create_pull_requests() {
 
         if [[ $prefix == "DEV" ]]; then
             local target_branch="develop"
+            local label="dev"
         elif [[ $prefix == "QA" ]]; then
             local target_branch="testing"
+            local label="qa"
         elif [[ $prefix == "STG" ]]; then
             local target_branch="staging"
+            local label="stg"
         elif [[ $prefix == "PROD" ]]; then
             local target_branch="master"
+            local label="production"
         fi
 
         # Construct PR title based on prefix and provided title
@@ -331,7 +341,8 @@ function create_pull_requests() {
         git checkout "$branch"
 
         # Create the PR using GitHub CLI
-        if gh pr create --base "$target_branch" --head "$branch" --title "$full_pr_title" --body "$pr_body"; then
+        # i wanna add a label to the PR
+        if gh pr create --base "$target_branch" --head "$branch" --title "$full_pr_title" --body "$pr_body" --label "$label"; then
             echo "✅ Successfully created PR for $branch"
 
             # Get the PR URL and display it
