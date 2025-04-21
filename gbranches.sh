@@ -235,7 +235,7 @@ function propagate_changes() {
             echo "Cherry-picking to: $current_branch (from commit: ${commit_hash:0:8})"
             git checkout "$current_branch"
             git fetch
-            if git pull origin "$remote_branch" then
+            if git pull origin "$remote_branch"; then
                 echo "✅ Successfully pulled changes from $remote_branch"
             else
                 echo "⚠️  Conflicts with $remote_branch as recomendation create a new branch and start as a new feature"
