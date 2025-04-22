@@ -322,16 +322,16 @@ function create_pull_requests() {
 
         if [[ $prefix == "DEV" ]]; then
             local target_branch="develop"
-            local label="dev"
+            local label=""
         elif [[ $prefix == "QA" ]]; then
             local target_branch="testing"
-            local label="qa"
+            local label="--label qa"
         elif [[ $prefix == "STG" ]]; then
             local target_branch="staging"
-            local label="stg"
+            local label="--label stg"
         elif [[ $prefix == "PROD" ]]; then
             local target_branch="master"
-            local label="production"
+            local label="--label production"
         fi
 
         # Construct PR title based on prefix and provided title
@@ -342,7 +342,7 @@ function create_pull_requests() {
 
         # Create the PR using GitHub CLI
         # i wanna add a label to the PR
-        if gh pr create --base "$target_branch" --head "$branch" --title "$full_pr_title" --body "$pr_body" --label "$label"; then
+        if gh pr create --base "$target_branch" --head "$branch" --title "$full_pr_title" --body "$pr_body" "$label"; then
             echo "✅ Successfully created PR for $branch"
 
             # Get the PR URL and display it
