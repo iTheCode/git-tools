@@ -342,7 +342,7 @@ function create_pull_requests() {
 
         # Create the PR using GitHub CLI
         # i wanna add a label to the PR
-        if gh pr create --base "$target_branch" --head "$branch" --title "$full_pr_title" --body "$pr_body" "$label"; then
+        if gh pr create --base "$target_branch" --head "$branch" --title "$full_pr_title" --body "$pr_body" $label; then
             echo "✅ Successfully created PR for $branch"
 
             # Get the PR URL and display it
